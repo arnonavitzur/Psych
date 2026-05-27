@@ -4,7 +4,7 @@
   "description": "Psychometric Test Timer",
   "start_url": "./PsychTimer.html",
   "display": "fullscreen",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [

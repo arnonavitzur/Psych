@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PsychTimer-v3';
+const CACHE_NAME = 'PsychTimer-v3.1';
 const ASSETS = [
   './PsychTimer.html',
   './manifest.json',
