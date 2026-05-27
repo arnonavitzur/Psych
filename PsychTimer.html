@@ -561,13 +561,6 @@ function advanceAfterAnswer(q){
   }
 }
 
-function scrollCurrentIntoView(){
-  const scroll=document.getElementById('ls-scroll');
-  if(!scroll) return;
-  const col=scroll.querySelector('.q-col.is-current');
-  if(col) col.scrollIntoView({inline:'center', behavior:'smooth', block:'nearest'});
-}
-
 function navigate(dir){
   const nq=currentQ+dir;
   if(nq<1||nq>T().qs) return;
@@ -797,8 +790,16 @@ function renderOvScroll(){
     cell.onclick=(e)=>{ e.stopPropagation(); currentQ=i; closeOvTray(); render(); };
     scroll.appendChild(cell);
   }
+  // Scroll tray container to show current cell — use scrollLeft, not scrollIntoView
+  // scrollIntoView can bubble up and move the ls-scroll unexpectedly
   const cells=scroll.querySelectorAll('.ov-cell');
-  if(cells[currentQ-1]) cells[currentQ-1].scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});
+  const currentCell=cells[currentQ-1];
+  if(currentCell){
+    const cellLeft=currentCell.offsetLeft;
+    const cellWidth=currentCell.offsetWidth;
+    const containerWidth=scroll.offsetWidth;
+    scroll.scrollLeft=cellLeft-(containerWidth/2)+(cellWidth/2);
+  }
 }
 
 /* ── MAIN RENDER ── */
