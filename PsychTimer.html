@@ -387,6 +387,34 @@ html, body {
   .modal-backdrop { border-radius: 0 !important; }
   .pause-overlay { border-radius: 0 !important; }
 }
+/* ── PRE-CHAPTER MODAL ── */
+#pre-chapter-backdrop {
+  position: absolute; inset: 0; z-index: 35;
+  background: var(--backdrop-bg);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s;
+  border-radius: 34px;
+}
+#pre-chapter-backdrop.open { opacity: 1; pointer-events: all; }
+.pre-chapter-modal {
+  border-radius: 16px; padding: 20px 18px 18px; width: 210px;
+  border: 0.5px solid var(--border-subtle);
+  transform: scale(0.92) translateY(8px);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s;
+  opacity: 0; display: flex; flex-direction: column; align-items: center;
+}
+#pre-chapter-backdrop.open .pre-chapter-modal { transform: scale(1) translateY(0); opacity: 1; }
+.pre-ch-eyebrow { font-size: 10px; color: var(--fg-tertiary); margin-bottom: 8px; letter-spacing: .04em; text-transform: uppercase; }
+.pre-ch-ring-wrap { margin: 12px 0 14px; position: relative; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+.pre-ch-ring-svg { position: absolute; inset: 0; transform: rotate(-90deg); overflow: visible; }
+.pre-ch-ring-track { fill: none; stroke: var(--fg-faint); stroke-width: 3.5; }
+.pre-ch-ring-fill  { fill: none; stroke-width: 3.5; stroke-linecap: round; transition: stroke-dashoffset .95s linear; }
+.pre-ch-ring-num { font-size: 22px; font-weight: 500; color: var(--fg-primary); font-variant-numeric: tabular-nums; position: relative; z-index: 1; }
+.pre-ch-pause-btn { width: 100%; margin-top: 14px; padding: 9px; border-radius: 12px; background: transparent; border: 1px solid var(--border-subtle); color: var(--fg-secondary); font-size: 11px; cursor: pointer; transition: background .15s; }
+.pre-ch-pause-btn:hover { background: var(--surface); }
+.pre-ch-start-btn { width: 100%; margin-top: 8px; padding: 11px; border-radius: 12px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+.pre-ch-start-btn:hover { opacity: .85; }
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 </head>
@@ -524,10 +552,10 @@ html, body {
             <span class="modal-pill-num">פרק 3</span>
           </div>
         </div>
-        <div class="modal-row"><span class="modal-label">פרק בסשן</span><span class="modal-val">פרק 3 מתוך 6</span></div>
-        <div class="modal-row"><span class="modal-label">שנה ועונה</span><span class="modal-val">אביב 2023</span></div>
-        <div class="modal-row"><span class="modal-label">סוג</span><span class="modal-val" id="modal-type">כמותי א׳</span></div>
-        <div class="modal-row"><span class="modal-label">שאלות</span><span class="modal-val" id="modal-qs">20 שאלות</span></div>
+        <div class="modal-row"><span class="modal-label">מספר פרק</span><span class="modal-val">פרק 3 מתוך 6</span></div>
+        <div class="modal-row"><span class="modal-label">מועד</span><span class="modal-val">אביב 2023</span></div>
+        <div class="modal-row"><span class="modal-label">פרק המקור</span><span class="modal-val" id="modal-type">כמותי א׳</span></div>
+        <div class="modal-row"><span class="modal-label">מספר שאלות</span><span class="modal-val" id="modal-qs">20 שאלות</span></div>
         <div class="modal-row"><span class="modal-label">זמן שחלף</span><span class="modal-val" id="modal-elapsed">00:00</span></div>
         <hr class="modal-hr">
         <button class="modal-finish-btn" onclick="showFinishConfirm()">סיים פרק לפני הזמן</button>
@@ -550,6 +578,43 @@ html, body {
     <i class="ti ti-player-pause" style="font-size:32px; color:var(--fg-tertiary)"></i>
     <div class="pause-label">הסשן מושהה</div>
     <button class="pause-resume" onclick="togglePause()">המשך</button>
+  </div>
+
+  <!-- ── PRE-CHAPTER MODAL ── -->
+  <div id="pre-chapter-backdrop">
+    <div class="pre-chapter-modal" id="pre-chapter-modal">
+      <div class="pre-ch-eyebrow">הפרק הבא</div>
+
+      <!-- Pill (same style as chapter pill) -->
+      <div class="modal-pill-row" style="margin-bottom:12px;">
+        <div class="modal-pill" id="pre-pill">
+          <span class="modal-pill-type" id="pre-pill-type">כמותי</span>
+          <span class="modal-pill-sep">·</span>
+          <span class="modal-pill-num" id="pre-pill-num">פרק 1</span>
+        </div>
+      </div>
+
+      <!-- Chapter info rows -->
+      <div style="width:100%">
+        <div class="modal-row"><span class="modal-label">מועד</span><span class="modal-val">אביב 2023</span></div>
+        <div class="modal-row"><span class="modal-label">פרק המקור</span><span class="modal-val" id="pre-modal-type">כמותי א׳</span></div>
+        <div class="modal-row"><span class="modal-label">מספר שאלות</span><span class="modal-val" id="pre-modal-qs">20 שאלות</span></div>
+        <div class="modal-row" style="border-bottom:none;"><span class="modal-label">זמן להשלמת הפרק</span><span class="modal-val">20:00</span></div>
+      </div>
+
+      <!-- 10-second countdown ring -->
+      <div class="pre-ch-ring-wrap">
+        <svg class="pre-ch-ring-svg" viewBox="0 0 60 60">
+          <circle class="pre-ch-ring-track" cx="30" cy="30" r="26"/>
+          <circle class="pre-ch-ring-fill" id="pre-ring-fill" cx="30" cy="30" r="26"/>
+        </svg>
+        <span class="pre-ch-ring-num" id="pre-ring-num">10</span>
+      </div>
+
+      <!-- Buttons -->
+      <button class="pre-ch-pause-btn" onclick="preChapterPause()">השהה תרגול</button>
+      <button class="pre-ch-start-btn" id="pre-start-btn" onclick="startChapter()">התחל פרק</button>
+    </div>
   </div>
 
 </div>
@@ -606,7 +671,13 @@ function startTimer(){
   if(timerInterval) clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
     if(paused) return;
-    if(secondsElapsed>=CHAPTER_DURATION){ clearInterval(timerInterval); timerInterval=null; updateTimerDisplay(); return; }
+    if(secondsElapsed>=CHAPTER_DURATION){
+      clearInterval(timerInterval); timerInterval=null;
+      updateTimerDisplay();
+      // Auto-advance to next chapter
+      advanceToNextChapter();
+      return;
+    }
     secondsElapsed++; updateTimerDisplay();
   },1000);
 }
@@ -1023,19 +1094,112 @@ function hideFinishConfirm(){
 }
 function confirmFinishChapter(){
   closeChModal();
-  // Advance to next chapter: increment number, pick random different type
+  advanceToNextChapter();
+}
+
+function advanceToNextChapter(){
+  // Increment chapter number and pick a random different type
   chapterNum++;
   const types=['quant','verbal','english'];
   const others=types.filter(t=>t!==type);
   type=others[Math.floor(Math.random()*others.length)];
-  // Reset session state
+  // Reset session state but don't start timer yet
   currentQ=1; answers={}; guessed={};
-  _lsBuildKey=''; // force landscape rebuild
-  resetTimer();
+  _lsBuildKey='';
+  // Stop the running timer
+  if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
+  secondsElapsed=0;
+  updateTimerDisplay();
   render();
-  // Update desktop controls to reflect new type
+  // Update desktop controls
   types.forEach((v,i)=>document.querySelectorAll('#type-controls .ctrl-btn')[i].classList.toggle('active',v===type));
   updateSBtns();
+  // Show pre-chapter modal
+  showPreChapterModal();
+}
+
+/* ── PRE-CHAPTER MODAL ── */
+let preChCountdown=10, preChTimer=null;
+const CIRCUMFERENCE = 2 * Math.PI * 26; // r=26
+
+function showPreChapterModal(){
+  const t=T(), m=M();
+
+  // Style the modal background
+  const modal=document.getElementById('pre-chapter-modal');
+  modal.style.background = mode==='dark' ? 'rgba(26,26,36,0.98)' : 'rgba(250,248,243,0.99)';
+
+  // Populate pill
+  const pill=document.getElementById('pre-pill');
+  pill.style.background=m.pillBg;
+  pill.style.border=m.pillBorder?`1px solid ${m.pillBorder}`:'none';
+  document.getElementById('pre-pill-type').textContent=t.label;
+  document.getElementById('pre-pill-type').style.color=m.pillColor;
+  pill.querySelector('.modal-pill-sep').style.color=m.pillColor+'99';
+  document.getElementById('pre-pill-num').textContent='פרק '+chapterNum;
+  document.getElementById('pre-pill-num').style.color=m.pillColor;
+
+  // Populate info
+  document.getElementById('pre-modal-type').textContent=t.typeLabel;
+  document.getElementById('pre-modal-qs').textContent=t.qs+' שאלות';
+
+  // Style start button with chapter color
+  const startBtn=document.getElementById('pre-start-btn');
+  startBtn.style.background=m.sel;
+  startBtn.style.color='#fff';
+
+  // Style ring fill with chapter color
+  const ringFill=document.getElementById('pre-ring-fill');
+  ringFill.style.stroke=m.glowR;
+  ringFill.style.strokeDasharray=CIRCUMFERENCE;
+  ringFill.style.strokeDashoffset='0';
+
+  // Show backdrop
+  document.getElementById('pre-chapter-backdrop').classList.add('open');
+
+  // Start 10-second countdown
+  preChCountdown=10;
+  document.getElementById('pre-ring-num').textContent=preChCountdown;
+  ringFill.style.strokeDashoffset='0';
+
+  if(preChTimer) clearInterval(preChTimer);
+  preChTimer=setInterval(()=>{
+    preChCountdown--;
+    document.getElementById('pre-ring-num').textContent=preChCountdown;
+    // Update ring: dashoffset goes from 0 → full circumference as time runs out
+    const progress=(10-preChCountdown)/10;
+    ringFill.style.strokeDashoffset=(CIRCUMFERENCE*progress).toFixed(2);
+    if(preChCountdown<=0){
+      clearInterval(preChTimer); preChTimer=null;
+      startChapter();
+    }
+  }, 1000);
+}
+
+function closePreChapterModal(){
+  if(preChTimer){ clearInterval(preChTimer); preChTimer=null; }
+  document.getElementById('pre-chapter-backdrop').classList.remove('open');
+}
+
+function startChapter(){
+  closePreChapterModal();
+  // Chapter is already set up — just make sure timer is running and not paused
+  if(paused){
+    paused=false;
+    document.getElementById('pause-overlay').classList.remove('open');
+  }
+  resetTimer();
+  render();
+}
+
+function preChapterPause(){
+  closePreChapterModal();
+  // Enter pause state
+  paused=true;
+  const o=document.getElementById('pause-overlay');
+  o.style.background=mode==='dark'?'rgba(8,8,18,0.94)':'rgba(240,240,248,0.96)';
+  o.classList.add('open');
+  render();
 }
 
 /* ── MISC ── */
@@ -1073,10 +1237,11 @@ window.addEventListener('resize',()=>render());
 /* ── INIT ── */
 render();
 updateTimerDisplay();
-startTimer();
 document.getElementById('screen').classList.toggle('light',mode==='light');
 document.getElementById('phone').classList.toggle('light-mode',mode==='light');
 document.body.style.background=mode==='dark'?BG_DARK:BG_LIGHT;
+// Show pre-chapter modal immediately — timer starts only when student taps "התחל פרק"
+showPreChapterModal();
 </script>
 <script>
   if('serviceWorker' in navigator) {
