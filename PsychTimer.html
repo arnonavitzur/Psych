@@ -1157,32 +1157,42 @@ function showPreChapterModal(){
   // Show backdrop
   document.getElementById('pre-chapter-backdrop').classList.add('open');
 
-  // Reset countdown display immediately
+  // Reset countdown display
   preChCountdown=10;
   document.getElementById('pre-ring-num').textContent=preChCountdown;
   ringFill.style.strokeDashoffset='0';
-  // Disable the CSS transition briefly so the reset is instant (no animated jump)
   ringFill.style.transition='none';
 
   if(preChTimer){ clearInterval(preChTimer); preChTimer=null; }
 
-  // Wait for the modal's open animation to complete before starting countdown
-  // rAF ensures the DOM is painted, then 300ms lets the opacity transition finish
+  // Use wall-clock time (Date.now) instead of tick count so mobile timer
+  // throttling can never cause the countdown to fire prematurely.
+  // Also enforce a minimum 1.5s display before any auto-advance can happen.
+  const COUNTDOWN_SECS = 10;
+  const MIN_DISPLAY_MS = 1500; // never auto-advance before this
+  let startTime = null;
+
   requestAnimationFrame(()=>{
-    setTimeout(()=>{
-      // Re-enable transition now that we're about to animate
+    // Two rAFs guarantee the modal is fully painted before we do anything
+    requestAnimationFrame(()=>{
       ringFill.style.transition='stroke-dashoffset .95s linear';
-      preChTimer=setInterval(()=>{
-        preChCountdown--;
-        document.getElementById('pre-ring-num').textContent=Math.max(0,preChCountdown);
-        const progress=(10-preChCountdown)/10;
-        ringFill.style.strokeDashoffset=(CIRCUMFERENCE*Math.min(1,progress)).toFixed(2);
-        if(preChCountdown<=0){
-          clearInterval(preChTimer); preChTimer=null;
+      startTime = Date.now();
+
+      preChTimer = setInterval(()=>{
+        const elapsed = (Date.now() - startTime) / 1000; // seconds since start
+        const remaining = Math.max(0, COUNTDOWN_SECS - elapsed);
+        const displayNum = Math.ceil(remaining);
+
+        document.getElementById('pre-ring-num').textContent = displayNum;
+        const progress = elapsed / COUNTDOWN_SECS;
+        ringFill.style.strokeDashoffset = (CIRCUMFERENCE * Math.min(1, progress)).toFixed(2);
+
+        if(remaining <= 0 && (Date.now() - startTime) >= MIN_DISPLAY_MS){
+          clearInterval(preChTimer); preChTimer = null;
           startChapter();
         }
-      }, 1000);
-    }, 350);
+      }, 200); // poll every 200ms — fast enough for smooth display, not affected by throttling
+    });
   });
 }
 
