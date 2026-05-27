@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PsychTimer">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -176,7 +180,7 @@ html, body {
 .ellipses-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; }
 .ellipse-row { display: flex; align-items: center; justify-content: center; width: 100%; position: relative; }
 
-/* SHARED ELLIPSE (portrait single + landscape all) */
+/* SHARED ELLIPSE */
 .ellipse {
   border-radius: 50%;
   border: 1.5px solid var(--fg-faint);
@@ -186,7 +190,8 @@ html, body {
   color: var(--fg-secondary); user-select: none;
   position: relative; /* for badge */
   -webkit-user-select: none;
-  touch-action: none; /* prevent scroll during long press */
+  flex-shrink: 0;
+  /* Explicitly accept touch events — no touch-action blocking scroll here */
 }
 .ellipse:hover { border-color: var(--fg-secondary); color: var(--fg-primary); }
 .ellipse.selected { color: #fff !important; border-color: transparent !important; }
@@ -194,7 +199,7 @@ html, body {
 
 /* Guess badge — small ? tag top-right of ellipse */
 .guess-badge {
-  position: absolute; top: -4px; right: -4px;
+  position: absolute; top: -5px; right: -5px;
   width: 14px; height: 14px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 9px; font-weight: 700;
@@ -202,10 +207,11 @@ html, body {
   opacity: 0; transition: opacity .15s;
   border: 1.5px solid;
   line-height: 1;
+  z-index: 2;
 }
 .ellipse.guessed .guess-badge { opacity: 1; }
 
-/* Portrait-specific ellipse size */
+/* Portrait ellipse — matches v23 exactly */
 .ellipse-portrait { width: 42px; height: 58px; font-size: 15px; }
 
 /* q-area with click to open tray */
@@ -221,25 +227,20 @@ html, body {
 @media (orientation: landscape) {
   .portrait-body { display: none; }
   .landscape-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-  /* Compact top in landscape */
-  .top-section { padding: 6px 12px 4px !important; gap: 0 !important; flex-direction: row !important; align-items: center !important; }
-  .chapter-pill-btn { padding: 4px 10px !important; }
+  /* Landscape top: pill far right, then compact [pause · timer · eye] group, with space between */
+  .top-section { padding: 5px 10px 4px !important; gap: 0 !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; }
+  .chapter-pill-btn { padding: 3px 9px !important; order: 2; }
   .pill-type { font-size: 11px !important; }
   .pill-sep, .pill-num { font-size: 10px !important; }
-  .timer-row { gap: 8px !important; flex: 1; width: auto !important; }
+  /* timer-row becomes a tight inline group: [pause][gap][timer][gap][eye] */
+  .timer-row { gap: 6px !important; width: auto !important; flex: 0 0 auto !important; order: 1; justify-content: center; }
   .icon-btn { width: clamp(44px,6vh,50px) !important; height: clamp(44px,6vh,50px) !important; border-radius: 10px !important; }
   .icon-btn i { font-size: clamp(16px,2.5vh,20px) !important; }
-  .timer-val { font-size: clamp(18px,3.5vh,26px) !important; }
+  .timer-block { flex: 0 0 auto !important; }
+  .timer-val { font-size: clamp(18px,3.5vh,26px) !important; white-space: nowrap; }
   .timer-cap { font-size: 8px !important; }
   /* Bottom dots hidden in landscape */
   .bottom-section { display: none !important; }
-  /* Mobile border radius fixes */
-  @media (max-width: 900px) {
-    .tray-backdrop { border-radius: 0 !important; }
-    .modal-backdrop { border-radius: 0 !important; }
-    .pause-overlay { border-radius: 0 !important; }
-    .sheet-tray { border-radius: 20px 20px 0 0; }
-  }
 }
 
 /* Landscape scroll area */
@@ -308,13 +309,18 @@ html, body {
   .icon-btn i { font-size: clamp(18px, 4.5vw, 24px) !important; }
   .timer-val { font-size: clamp(28px, 9vw, 52px) !important; }
   .timer-cap { font-size: clamp(10px, 2.5vw, 14px) !important; margin-top: 1vw !important; }
-  .main-area { padding: 2vw 0 !important; }
+  .q-area { padding: 4px 14px 0 !important; }
+  .q-label { font-size: clamp(10px, 2.5vw, 13px) !important; }
+  .q-big { font-size: clamp(52px, 15vw, 80px) !important; }
+  .q-sub { font-size: clamp(10px, 2.5vw, 13px) !important; }
+  .main-area { padding: 2px 0 !important; flex: 1; }
   .nav-side { width: clamp(52px, 13vw, 72px) !important; }
   .nav-arrow { font-size: clamp(24px, 7vw, 40px) !important; }
   .nav-label { font-size: clamp(10px, 2.8vw, 14px) !important; }
-  .ellipses-col { gap: clamp(10px, 2.8vw, 18px) !important; }
-  .ellipse-portrait { width: clamp(50px, 13vw, 76px) !important; height: clamp(68px, 18vw, 106px) !important; font-size: clamp(16px, 4.5vw, 24px) !important; }
-  .dots-bar { padding: clamp(12px, 3vw, 18px) 5vw !important; min-height: 44px; align-items: center; }
+  /* Ellipses: match v23 proportions, gap controlled to not over-space */
+  .ellipses-col { gap: clamp(8px, 2.2vw, 14px) !important; }
+  .ellipse-portrait { width: clamp(42px, 11vw, 60px) !important; height: clamp(58px, 15vw, 82px) !important; font-size: clamp(15px, 4vw, 20px) !important; }
+  .dots-bar { padding: clamp(10px, 2.5vw, 16px) 5vw !important; min-height: 44px; align-items: center; }
   .dot { width: clamp(6px, 1.8vw, 10px) !important; height: clamp(6px, 1.8vw, 10px) !important; }
   .dot.current { width: clamp(9px, 2.5vw, 14px) !important; height: clamp(9px, 2.5vw, 14px) !important; }
   .ov-tray-inner { padding: 4vw 4vw 5vw !important; }
@@ -510,7 +516,6 @@ const BG_DARK='rgba(19,19,26,1)', BG_LIGHT='rgba(250,248,243,1)';
 let type='quant', mode='light', currentQ=1;
 let answers={}, guessed={};
 let paused=false, timerBlurred=false, ovOpen=false, chModalOpen=false;
-
 const CHAPTER_DURATION=1200;
 let secondsElapsed=0, timerInterval=null;
 
@@ -542,31 +547,6 @@ function resetTimer(){ if(timerInterval) clearInterval(timerInterval); secondsEl
 /* ── ANSWER SELECTION + LONG-PRESS GUESS + AUTO-ADVANCE ── */
 let pressTimer=null, pressQ=null, pressI=null;
 
-function handlePressStart(q, i, e){
-  if(e.cancelable) e.preventDefault();
-  pressQ=q; pressI=i;
-  pressTimer=setTimeout(()=>{
-    // Long press → select as guess
-    answers[q]=i;
-    guessed[q]=true;
-    render();
-    setTimeout(()=>advanceAfterAnswer(q), 320);
-    pressTimer=null;
-  }, 500);
-}
-function handlePressEnd(q, i, e){
-  if(pressTimer!==null){
-    clearTimeout(pressTimer);
-    pressTimer=null;
-    // Short tap → regular select (toggle off if same)
-    if(answers[q]===i){ delete answers[q]; delete guessed[q]; render(); }
-    else { answers[q]=i; guessed[q]=false; render(); setTimeout(()=>advanceAfterAnswer(q), 320); }
-  }
-}
-function handlePressCancel(){
-  if(pressTimer!==null){ clearTimeout(pressTimer); pressTimer=null; }
-}
-
 function advanceAfterAnswer(q){
   const t=T();
   if(q < t.qs){
@@ -591,16 +571,20 @@ function navigate(dir){
   currentQ=nq; render();
 }
 
-/* ── ELLIPSE FACTORY (shared, returns a positioned div with badge) ── */
+/* ── ELLIPSE FACTORY ── */
+/* Returns the ellipse element directly (no wrap div) */
 function makeEllipse(q, i, m, w, h, fontSize){
-  const wrap=document.createElement('div');
-  wrap.style.position='relative'; wrap.style.flexShrink='0';
-  wrap.style.width=w+'px'; wrap.style.height=h+'px';
-
   const el=document.createElement('div');
   el.className='ellipse';
-  el.style.width=w+'px'; el.style.height=h+'px'; el.style.fontSize=fontSize+'px';
-  el.textContent=i;
+  el.style.width=w+'px';
+  el.style.height=h+'px';
+  el.style.fontSize=fontSize+'px';
+
+  // Number label (span so pointer-events don't interfere)
+  const numSpan=document.createElement('span');
+  numSpan.textContent=i;
+  numSpan.style.pointerEvents='none';
+  el.appendChild(numSpan);
 
   const sel=answers[q]===i;
   const isGuessed=sel&&guessed[q];
@@ -622,20 +606,63 @@ function makeEllipse(q, i, m, w, h, fontSize){
   badge.style.background=m.sel;
   badge.style.color='#fff';
   badge.style.borderColor=m.glowR;
+  badge.style.pointerEvents='none';
   el.appendChild(badge);
 
-  // Touch events for long-press
-  el.addEventListener('touchstart', (e)=>handlePressStart(q,i,e), {passive:false});
-  el.addEventListener('touchend',   (e)=>handlePressEnd(q,i,e),   {passive:false});
-  el.addEventListener('touchcancel',handlePressCancel);
-  el.addEventListener('touchmove',  handlePressCancel, {passive:true});
-  // Mouse fallback (desktop preview)
-  el.addEventListener('mousedown', (e)=>handlePressStart(q,i,e));
-  el.addEventListener('mouseup',   (e)=>handlePressEnd(q,i,e));
-  el.addEventListener('mouseleave', handlePressCancel);
+  // ── Touch long-press (mobile) ──
+  let _timer=null;
+  el.addEventListener('touchstart', (e)=>{
+    e.stopPropagation();
+    if(e.cancelable) e.preventDefault();
+    _timer=setTimeout(()=>{
+      _timer=null;
+      answers[q]=i; guessed[q]=true;
+      render();
+      setTimeout(()=>advanceAfterAnswer(q), 300);
+    }, 500);
+  }, {passive:false});
 
-  wrap.appendChild(el);
-  return wrap;
+  el.addEventListener('touchend', (e)=>{
+    e.stopPropagation();
+    if(e.cancelable) e.preventDefault();
+    if(_timer!==null){
+      clearTimeout(_timer); _timer=null;
+      // short tap
+      if(answers[q]===i){ delete answers[q]; delete guessed[q]; render(); }
+      else { answers[q]=i; guessed[q]=false; render(); setTimeout(()=>advanceAfterAnswer(q), 300); }
+    }
+  }, {passive:false});
+
+  el.addEventListener('touchmove', (e)=>{ if(_timer!==null){ clearTimeout(_timer); _timer=null; } }, {passive:true});
+  el.addEventListener('touchcancel', ()=>{ if(_timer!==null){ clearTimeout(_timer); _timer=null; } });
+
+  // ── Mouse long-press (desktop preview) ──
+  let _mtimer=null;
+  el.addEventListener('mousedown', (e)=>{
+    e.stopPropagation();
+    _mtimer=setTimeout(()=>{
+      _mtimer=null;
+      answers[q]=i; guessed[q]=true;
+      render();
+      setTimeout(()=>advanceAfterAnswer(q), 300);
+    }, 500);
+  });
+  el.addEventListener('mouseup', (e)=>{
+    e.stopPropagation();
+    if(_mtimer!==null){
+      clearTimeout(_mtimer); _mtimer=null;
+      if(answers[q]===i){ delete answers[q]; delete guessed[q]; render(); }
+      else { answers[q]=i; guessed[q]=false; render(); setTimeout(()=>advanceAfterAnswer(q), 300); }
+    }
+  });
+  // Use 'mouseleave' only on the root el, not children — check relatedTarget
+  el.addEventListener('mouseleave', (e)=>{
+    if(!el.contains(e.relatedTarget) && _mtimer!==null){
+      clearTimeout(_mtimer); _mtimer=null;
+    }
+  });
+
+  return el; // return el directly, no wrap
 }
 
 /* ── PORTRAIT RENDER ── */
@@ -646,9 +673,9 @@ function renderPortrait(){
   col.innerHTML='';
   for(let i=1;i<=4;i++){
     const row=document.createElement('div'); row.className='ellipse-row';
-    const wrap=makeEllipse(currentQ,i,m,42,58,15);
-    wrap.querySelector('.ellipse').classList.add('ellipse-portrait');
-    row.appendChild(wrap);
+    const el=makeEllipse(currentQ,i,m,42,58,15);
+    el.classList.add('ellipse-portrait');
+    row.appendChild(el);
     col.appendChild(row);
   }
   // nav
@@ -706,12 +733,18 @@ function renderLandscape(){
       marker.innerHTML=`<i class="ti ti-chevron-down" style="font-size:10px;color:${m.glowR}" aria-hidden="true"></i>`;
       col.appendChild(marker);
 
-      // Q number
+      // Q number — clickable to set current question
       const qn=document.createElement('div');
       qn.className='q-num-label';
       qn.style.fontSize='13px';
+      qn.style.cursor='pointer';
+      qn.style.minHeight='24px';
+      qn.style.display='flex'; qn.style.alignItems='center'; qn.style.justifyContent='center';
+      qn.style.padding='0 4px';
       if(q===currentQ) qn.style.color=m.glowR;
       qn.textContent=q;
+      qn.addEventListener('click',(e)=>{ e.stopPropagation(); currentQ=q; render(); });
+      qn.addEventListener('touchend',(e)=>{ e.stopPropagation(); e.preventDefault(); currentQ=q; render(); },{passive:false});
       col.appendChild(qn);
 
       // Ellipses
@@ -719,9 +752,9 @@ function renderLandscape(){
       stack.className='q-ellipses';
       stack.style.gap='5px';
       for(let i=1;i<=4;i++){
-        const wrap=makeEllipse(q,i,m,sz.w,sz.h,sz.fs);
-        wrap.querySelector('.ellipse').classList.add('ellipse-landscape');
-        stack.appendChild(wrap);
+        const el=makeEllipse(q,i,m,sz.w,sz.h,sz.fs);
+        el.classList.add('ellipse-landscape');
+        stack.appendChild(el);
       }
       col.appendChild(stack);
       group.appendChild(col);
@@ -882,6 +915,11 @@ startTimer();
 document.getElementById('screen').classList.toggle('light',mode==='light');
 document.getElementById('phone').classList.toggle('light-mode',mode==='light');
 document.body.style.background=mode==='dark'?BG_DARK:BG_LIGHT;
+</script>
+<script>
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
 </script>
 </body>
 </html>
