@@ -556,8 +556,12 @@ function advanceAfterAnswer(q){
   const t=T();
   if(q < t.qs){
     currentQ=q+1;
-    render();
-    // Do NOT auto-scroll in landscape — only scroll on explicit Q-number tap
+    if(isLandscape()){
+      updateLandscape();
+      renderDots();
+    } else {
+      render();
+    }
   }
 }
 
@@ -565,6 +569,13 @@ function navigate(dir){
   const nq=currentQ+dir;
   if(nq<1||nq>T().qs) return;
   currentQ=nq; render();
+}
+
+/* Route answer updates: in landscape only update visuals in-place (preserves scroll position).
+   In portrait do a full render (rebuilds the single question view). */
+function renderAnswers(){
+  if(isLandscape()){ updateLandscape(); renderDots(); }
+  else { render(); }
 }
 
 /* ── ELLIPSE FACTORY ── */
@@ -608,26 +619,22 @@ function makeEllipse(q, i, m, w, h, fontSize){
   // ── Touch long-press (mobile) ──
   let _timer=null;
   el.addEventListener('touchstart', (e)=>{
-    // Do NOT preventDefault here — it breaks tap recognition on iOS/Android
-    // Just stop propagation to prevent scroll area interference
     e.stopPropagation();
     _timer=setTimeout(()=>{
       _timer=null;
       answers[q]=i; guessed[q]=true;
-      render();
+      renderAnswers();
       setTimeout(()=>advanceAfterAnswer(q), 300);
     }, 500);
-  }, {passive:true}); // passive:true so browser doesn't wait for preventDefault
+  }, {passive:true});
 
   el.addEventListener('touchend', (e)=>{
     e.stopPropagation();
-    // preventDefault here stops the synthetic mousedown/mouseup/click ghost events
     if(e.cancelable) e.preventDefault();
     if(_timer!==null){
       clearTimeout(_timer); _timer=null;
-      // short tap
-      if(answers[q]===i){ delete answers[q]; delete guessed[q]; render(); }
-      else { answers[q]=i; guessed[q]=false; render(); setTimeout(()=>advanceAfterAnswer(q), 300); }
+      if(answers[q]===i){ delete answers[q]; delete guessed[q]; renderAnswers(); }
+      else { answers[q]=i; guessed[q]=false; renderAnswers(); setTimeout(()=>advanceAfterAnswer(q), 300); }
     }
   }, {passive:false});
 
@@ -641,7 +648,7 @@ function makeEllipse(q, i, m, w, h, fontSize){
     _mtimer=setTimeout(()=>{
       _mtimer=null;
       answers[q]=i; guessed[q]=true;
-      render();
+      renderAnswers();
       setTimeout(()=>advanceAfterAnswer(q), 300);
     }, 500);
   });
@@ -649,11 +656,10 @@ function makeEllipse(q, i, m, w, h, fontSize){
     e.stopPropagation();
     if(_mtimer!==null){
       clearTimeout(_mtimer); _mtimer=null;
-      if(answers[q]===i){ delete answers[q]; delete guessed[q]; render(); }
-      else { answers[q]=i; guessed[q]=false; render(); setTimeout(()=>advanceAfterAnswer(q), 300); }
+      if(answers[q]===i){ delete answers[q]; delete guessed[q]; renderAnswers(); }
+      else { answers[q]=i; guessed[q]=false; renderAnswers(); setTimeout(()=>advanceAfterAnswer(q), 300); }
     }
   });
-  // Use 'mouseleave' only on the root el, not children — check relatedTarget
   el.addEventListener('mouseleave', (e)=>{
     if(!el.contains(e.relatedTarget) && _mtimer!==null){
       clearTimeout(_mtimer); _mtimer=null;
@@ -699,7 +705,10 @@ function getLandscapeEllipseSize(){
   return { w:ellW, h:ellH, fs:Math.round(ellW*0.38), colW:ellW+10 };
 }
 
-function renderLandscape(){
+/* ── LANDSCAPE: build DOM once, update in-place on re-render ── */
+let _lsBuildKey = ''; // track when full rebuild is needed
+
+function buildLandscape(){
   const m=M(), t=T();
   const scroll=document.getElementById('ls-scroll');
   if(!scroll) return;
@@ -716,14 +725,8 @@ function renderLandscape(){
 
       const col=document.createElement('div');
       col.className='q-col';
+      col.dataset.q=q;
       col.style.width=sz.colW+'px';
-      if(q===currentQ) col.classList.add('is-current');
-
-      // Current-column background tint
-      if(q===currentQ){
-        col.style.background=m.bandTint;
-        col.style.borderRadius='6px';
-      }
 
       // Chevron marker
       const marker=document.createElement('div');
@@ -731,7 +734,7 @@ function renderLandscape(){
       marker.innerHTML=`<i class="ti ti-chevron-down" style="font-size:10px;color:${m.glowR}" aria-hidden="true"></i>`;
       col.appendChild(marker);
 
-      // Q number — clickable to set current question
+      // Q number
       const qn=document.createElement('div');
       qn.className='q-num-label';
       qn.style.fontSize='13px';
@@ -739,25 +742,85 @@ function renderLandscape(){
       qn.style.minHeight='24px';
       qn.style.display='flex'; qn.style.alignItems='center'; qn.style.justifyContent='center';
       qn.style.padding='0 4px';
-      if(q===currentQ) qn.style.color=m.glowR;
       qn.textContent=q;
-      qn.addEventListener('click',(e)=>{ e.stopPropagation(); currentQ=q; render(); });
-      qn.addEventListener('touchend',(e)=>{ e.stopPropagation(); e.preventDefault(); currentQ=q; render(); },{passive:false});
+      qn.addEventListener('click',(e)=>{ e.stopPropagation(); currentQ=q; updateLandscape(); renderDots(); });
+      qn.addEventListener('touchend',(e)=>{ e.stopPropagation(); e.preventDefault(); currentQ=q; updateLandscape(); renderDots(); },{passive:false});
       col.appendChild(qn);
 
-      // Ellipses
+      // Ellipses stack
       const stack=document.createElement('div');
       stack.className='q-ellipses';
       stack.style.gap='5px';
       for(let i=1;i<=4;i++){
         const el=makeEllipse(q,i,m,sz.w,sz.h,sz.fs);
         el.classList.add('ellipse-landscape');
+        el.dataset.q=q; el.dataset.i=i;
         stack.appendChild(el);
       }
       col.appendChild(stack);
       group.appendChild(col);
     }
     scroll.appendChild(group);
+  }
+  // Run initial update after building
+  updateLandscape();
+}
+
+function updateLandscape(){
+  const m=M();
+  const scroll=document.getElementById('ls-scroll');
+  if(!scroll) return;
+
+  // Walk all columns and update only what changes:
+  // — is-current class + background tint on col
+  // — q-num-label color
+  // — ellipse fill, border, shadow, guessed state
+  const cols=scroll.querySelectorAll('.q-col');
+  cols.forEach(col=>{
+    const q=parseInt(col.dataset.q);
+    const isCurrent=q===currentQ;
+
+    // Column highlight
+    col.classList.toggle('is-current', isCurrent);
+    col.style.background=isCurrent?m.bandTint:'';
+    col.style.borderRadius=isCurrent?'6px':'';
+
+    // Q number color
+    const qn=col.querySelector('.q-num-label');
+    if(qn) qn.style.color=isCurrent?m.glowR:'';
+
+    // Ellipses — rebuild event listeners not needed, just update visuals
+    const ellipses=col.querySelectorAll('.ellipse');
+    ellipses.forEach((el,idx)=>{
+      const i=idx+1;
+      const sel=answers[q]===i;
+      const isGuessed=sel&&guessed[q];
+      el.style.background=sel?m.sel:m.tint;
+      el.style.color=sel?'#fff':'';
+      el.classList.toggle('selected',sel);
+      el.classList.toggle('guessed',isGuessed);
+      if(sel){
+        el.style.boxShadow=`0 0 0 2px ${m.glowR}, 0 0 ${isGuessed?'10px':'20px'} ${m.glowC}`;
+        el.style.borderColor='transparent';
+      } else {
+        el.style.boxShadow='none';
+        el.style.borderColor=m.ellBord||'';
+      }
+    });
+  });
+}
+
+function renderLandscape(){
+  const m=M(), t=T();
+  // Only full-rebuild if type/mode/size changed — preserves scrollLeft otherwise
+  const buildKey=type+'|'+mode+'|'+window.innerHeight+'|'+window.innerWidth;
+  const scroll=document.getElementById('ls-scroll');
+  if(!scroll) return;
+  if(_lsBuildKey!==buildKey || scroll.children.length===0){
+    _lsBuildKey=buildKey;
+    buildLandscape();
+  } else {
+    updateLandscape();
   }
 }
 
