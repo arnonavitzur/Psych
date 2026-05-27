@@ -1157,23 +1157,33 @@ function showPreChapterModal(){
   // Show backdrop
   document.getElementById('pre-chapter-backdrop').classList.add('open');
 
-  // Start 10-second countdown
+  // Reset countdown display immediately
   preChCountdown=10;
   document.getElementById('pre-ring-num').textContent=preChCountdown;
   ringFill.style.strokeDashoffset='0';
+  // Disable the CSS transition briefly so the reset is instant (no animated jump)
+  ringFill.style.transition='none';
 
-  if(preChTimer) clearInterval(preChTimer);
-  preChTimer=setInterval(()=>{
-    preChCountdown--;
-    document.getElementById('pre-ring-num').textContent=preChCountdown;
-    // Update ring: dashoffset goes from 0 → full circumference as time runs out
-    const progress=(10-preChCountdown)/10;
-    ringFill.style.strokeDashoffset=(CIRCUMFERENCE*progress).toFixed(2);
-    if(preChCountdown<=0){
-      clearInterval(preChTimer); preChTimer=null;
-      startChapter();
-    }
-  }, 1000);
+  if(preChTimer){ clearInterval(preChTimer); preChTimer=null; }
+
+  // Wait for the modal's open animation to complete before starting countdown
+  // rAF ensures the DOM is painted, then 300ms lets the opacity transition finish
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      // Re-enable transition now that we're about to animate
+      ringFill.style.transition='stroke-dashoffset .95s linear';
+      preChTimer=setInterval(()=>{
+        preChCountdown--;
+        document.getElementById('pre-ring-num').textContent=Math.max(0,preChCountdown);
+        const progress=(10-preChCountdown)/10;
+        ringFill.style.strokeDashoffset=(CIRCUMFERENCE*Math.min(1,progress)).toFixed(2);
+        if(preChCountdown<=0){
+          clearInterval(preChTimer); preChTimer=null;
+          startChapter();
+        }
+      }, 1000);
+    }, 350);
+  });
 }
 
 function closePreChapterModal(){
