@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Base: fills full screen on any device ── */
+html, body {
+  height: 100%;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  direction: rtl;
+  background: #13131A;
+}
+
+/* Desktop preview wrapper — hidden on real mobile */
+.outer { display: flex; flex-direction: column; align-items: center; padding: 16px 8px 32px; gap: 16px; }
+.controls-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.ctrl-btn { font-size: 11px; padding: 5px 12px; border-radius: 20px; border: 0.5px solid #ccc; background: #f0f0f0; color: #555; cursor: pointer; transition: all .15s; }
+.ctrl-btn.active { background: #222; color: #fff; border-color: #222; font-weight: 500; }
+
+/* Desktop: fixed-width phone frame */
+.phone { width: 250px; border-radius: 36px; overflow: hidden; border: 2px solid #2A2A3A; position: relative; transition: border-color .3s; }
+.phone.light-mode { border-color: #D0D0D8; }
+
+/* ── MOBILE: full-screen adaptive layout ── */
+@media (max-width: 600px) {
+  body { background: #13131A; overflow: hidden; }
+  .outer { padding: 0; gap: 0; min-height: 100dvh; justify-content: flex-start; }
+  .controls-row { display: none; }
+  .footer-hint { display: none; }
+  .phone {
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
+    overflow: hidden;
+  }
+  .screen {
+    min-height: 100dvh !important;
+    height: 100dvh;
+    border-radius: 0 !important;
+  }
+  /* Scale up all key measurements proportionally to viewport */
+  .top-section { padding: 5vw 5vw 3vw !important; gap: 3vw !important; }
+  .chapter-pill-btn { padding: 1.8vw 4vw !important; border-radius: 20px; }
+  .pill-type { font-size: clamp(13px, 3.5vw, 18px) !important; }
+  .pill-sep, .pill-num { font-size: clamp(12px, 3.2vw, 16px) !important; }
+  .timer-row { gap: 3vw !important; padding: 0 1vw; }
+  .icon-btn { width: clamp(44px, 9vw, 52px) !important; height: clamp(44px, 9vw, 52px) !important; border-radius: 12px !important; }
+  .icon-btn i { font-size: clamp(18px, 4.5vw, 24px) !important; }
+  .timer-val { font-size: clamp(28px, 9vw, 52px) !important; }
+  .timer-cap { font-size: clamp(10px, 2.5vw, 14px) !important; margin-top: 1vw !important; }
+  .q-area { padding: 2vw 5vw 0 !important; min-height: 44px; }
+  .q-label { font-size: clamp(11px, 2.8vw, 15px) !important; }
+  .q-big { font-size: clamp(64px, 18vw, 110px) !important; }
+  .q-sub { font-size: clamp(11px, 2.8vw, 15px) !important; margin-top: 1vw !important; }
+  .main-area { padding: 2vw 0 !important; }
+  .nav-side { width: clamp(52px, 13vw, 72px) !important; gap: 1.5vw !important; min-height: 44px; }
+  .nav-arrow { font-size: clamp(24px, 7vw, 40px) !important; }
+  .nav-label { font-size: clamp(10px, 2.8vw, 14px) !important; }
+  .ellipses-col { gap: clamp(10px, 2.8vw, 18px) !important; }
+  .ellipse {
+    width: clamp(50px, 13vw, 76px) !important;
+    height: clamp(68px, 18vw, 106px) !important;
+    font-size: clamp(16px, 4.5vw, 24px) !important;
+  }
+  .guess-icon-btn {
+    left: calc(50% - clamp(50px, 13vw, 76px) / 2 - clamp(10px, 2.5vw, 16px) - clamp(44px, 10vw, 56px)) !important;
+    width: clamp(44px, 10vw, 56px) !important;
+    min-height: 44px !important;
+    padding: clamp(4px, 1.2vw, 8px) !important;
+    border-radius: 10px !important;
+    justify-content: center;
+  }
+  .guess-icon-btn i { font-size: clamp(20px, 5.5vw, 28px) !important; }
+  .guess-icon-btn span { font-size: clamp(8px, 2.2vw, 12px) !important; }
+  .bottom-section { flex-shrink: 0; }
+  .dots-bar { padding: clamp(12px, 3vw, 18px) 5vw !important; min-height: 44px; align-items: center; }
+  .dot { width: clamp(6px, 1.8vw, 10px) !important; height: clamp(6px, 1.8vw, 10px) !important; }
+  .dot.current { width: clamp(9px, 2.5vw, 14px) !important; height: clamp(9px, 2.5vw, 14px) !important; }
+  /* Trays */
+  .tray-backdrop { border-radius: 0 !important; }
+  .sheet-tray { border-radius: 20px 20px 0 0; }
+  .ov-tray-inner { padding: 4vw 4vw 5vw !important; }
+  .tray-title { font-size: clamp(12px, 3.2vw, 16px) !important; }
+  .ov-cell { width: clamp(44px, 9.5vw, 56px) !important; height: clamp(44px, 9.5vw, 56px) !important; font-size: clamp(12px, 3vw, 16px) !important; border-radius: 9px !important; }
+  .tray-close { font-size: clamp(12px, 3.2vw, 16px) !important; padding: clamp(12px, 3vw, 16px) !important; min-height: 44px; }
+  /* Modal */
+  .modal-backdrop { border-radius: 0 !important; }
+  .chapter-modal { width: clamp(200px, 72vw, 320px) !important; padding: 5vw 5vw 4vw !important; border-radius: 18px !important; }
+  .modal-pill-type { font-size: clamp(13px, 3.8vw, 18px) !important; }
+  .modal-label { font-size: clamp(10px, 2.8vw, 14px) !important; }
+  .modal-val { font-size: clamp(11px, 3vw, 15px) !important; }
+  .modal-close { font-size: clamp(12px, 3.2vw, 16px) !important; min-height: 44px; }
+  /* Pause overlay */
+  .pause-overlay { border-radius: 0 !important; }
+  .pause-label { font-size: clamp(14px, 4vw, 20px) !important; }
+  .pause-resume { font-size: clamp(13px, 3.5vw, 18px) !important; padding: clamp(12px, 3vw, 18px) clamp(24px, 7vw, 40px) !important; min-height: 44px; }
+}
+
+.screen {
+  display: flex; flex-direction: column; min-height: 500px;
+  transition: background .35s; position: relative; overflow: hidden; direction: rtl;
+  --fg-primary: rgba(255,255,255,0.92);
+  --fg-secondary: rgba(255,255,255,0.50);
+  --fg-tertiary: rgba(255,255,255,0.30);
+  --fg-faint: rgba(255,255,255,0.14);
+  --surface: rgba(255,255,255,0.08);
+  --surface-hover: rgba(255,255,255,0.14);
+  --border-subtle: rgba(255,255,255,0.09);
+  --icon-btn-border: rgba(255,255,255,0.28);
+  --icon-btn-color: rgba(255,255,255,1);
+  --dot-border: rgba(255,255,255,0.28);
+  --dot-current: #ffffff;
+  --handle-color: rgba(255,255,255,0.22);
+  --sheet-close-bg: rgba(255,255,255,0.08);
+  --sheet-close-color: rgba(255,255,255,0.45);
+  --backdrop-bg: rgba(0,0,0,0.55);
+  --pause-btn-bg: rgba(255,255,255,0.10);
+  --pause-btn-border: rgba(255,255,255,0.22);
+}
+.screen.light {
+  --fg-primary: rgba(10,10,20,0.90);
+  --fg-secondary: rgba(10,10,20,0.62);
+  --fg-tertiary: rgba(10,10,20,0.50);
+  --fg-faint: rgba(10,10,20,0.12);
+  --surface: rgba(0,0,0,0.05);
+  --surface-hover: rgba(0,0,0,0.09);
+  --border-subtle: rgba(0,0,0,0.10);
+  --icon-btn-border: rgba(0,0,0,0.22);
+  --icon-btn-color: rgba(10,10,20,0.70);
+  --dot-border: rgba(0,0,0,0.22);
+  --dot-current: rgba(10,10,20,0.85);
+  --handle-color: rgba(0,0,0,0.16);
+  --sheet-close-bg: rgba(0,0,0,0.06);
+  --sheet-close-color: rgba(0,0,0,0.50);
+  --backdrop-bg: rgba(0,0,0,0.35);
+  --pause-btn-bg: rgba(0,0,0,0.08);
+  --pause-btn-border: rgba(0,0,0,0.16);
+}
+
+.top-section { padding: 16px 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.chapter-pill-btn { display: flex; align-items: center; gap: 6px; border: none; border-radius: 20px; padding: 5px 12px; cursor: pointer; transition: opacity .15s; }
+.chapter-pill-btn:hover { opacity: .82; }
+.pill-type { font-size: 12px; font-weight: 700; line-height: 1; }
+.pill-sep  { font-size: 11px; opacity: .5; }
+.pill-num  { font-size: 11px; font-weight: 400; opacity: .85; }
+
+.timer-row { display: flex; flex-direction: row; direction: ltr; align-items: center; gap: 10px; width: 100%; }
+.icon-btn { width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--icon-btn-border); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
+.icon-btn:hover { background: var(--surface-hover); }
+.icon-btn i { font-size: 14px; color: var(--icon-btn-color); }
+.timer-block { text-align: center; flex: 1; }
+.timer-val { font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: .04em; color: var(--fg-primary); line-height: 1; transition: filter .3s; }
+.timer-val.blurred { filter: blur(5px); user-select: none; }
+.timer-cap { font-size: 9px; color: var(--fg-tertiary); margin-top: 2px; }
+
+.q-area { display: flex; align-items: center; justify-content: center; padding: 4px 14px 0; }
+.q-center { text-align: center; }
+.q-label { font-size: 10px; color: var(--fg-tertiary); }
+.q-big   { font-size: 52px; font-weight: 500; line-height: 1; letter-spacing: -.02em; color: var(--fg-primary); }
+.q-sub   { font-size: 10px; color: var(--fg-tertiary); margin-top: 2px; }
+
+.main-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 6px 2px 2px; }
+.nav-side { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 52px; flex-shrink: 0; cursor: pointer; padding: 8px 2px; border-radius: 12px; border: none; background: transparent; }
+.nav-side.disabled { opacity: 0; pointer-events: none; }
+.nav-arrow { font-size: 22px; color: var(--fg-faint); transition: color .15s; }
+.nav-label { font-size: 9px; color: var(--fg-tertiary); transition: color .15s; text-align: center; line-height: 1.3; }
+.nav-side:hover .nav-arrow { color: var(--fg-secondary); }
+.nav-side:hover .nav-label  { color: var(--fg-secondary); }
+
+.ellipses-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; }
+.ellipse-row { display: flex; align-items: center; justify-content: center; width: 100%; position: relative; }
+.ellipse { width: 42px; height: 58px; border-radius: 50%; border: 1.5px solid var(--fg-faint); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; cursor: pointer; transition: all .18s; color: var(--fg-secondary); user-select: none; }
+.ellipse:hover { border-color: var(--fg-secondary); color: var(--fg-primary); }
+.ellipse.selected { color: #fff !important; border-color: transparent !important; }
+
+.guess-icon-btn {
+  position: absolute; left: calc(50% - 65px);
+  top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 4px 5px; border-radius: 8px;
+  border: 1px dashed var(--fg-faint); background: transparent; cursor: pointer;
+  transition: all .18s; opacity: 0; pointer-events: none; width: 36px;
+}
+.guess-icon-btn.visible { opacity: 1; pointer-events: all; }
+.guess-icon-btn:hover { border-color: var(--fg-secondary); }
+.guess-icon-btn.active { border-style: solid; }
+.guess-icon-btn i { font-size: 18px; transition: all .18s; color: var(--fg-tertiary); }
+.guess-icon-btn.active i { color: #fff; }
+.guess-icon-btn span { font-size: 8px; color: var(--fg-tertiary); white-space: nowrap; transition: color .18s; }
+.guess-icon-btn.active span { color: #fff; }
+
+.bottom-section { border-top: 0.5px solid var(--border-subtle); cursor: pointer; user-select: none; }
+.screen.light .bottom-section { box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+.dots-bar { display: flex; align-items: center; justify-content: center; padding: 10px 14px 16px; gap: 6px; }
+.dots-row { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; flex: 1; direction: ltr; }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; transition: all .2s; border: 1.5px solid var(--dot-border); background: transparent; }
+.dot.answered { border-color: transparent; }
+.dot.current  { width: 9px; height: 9px; background: var(--dot-current) !important; border-color: transparent !important; }
+.dots-hint { font-size: 9px; color: var(--fg-tertiary); }
+
+.tray-backdrop { position: absolute; inset: 0; z-index: 15; background: var(--backdrop-bg); opacity: 0; pointer-events: none; transition: opacity .25s; border-radius: 34px; }
+.tray-backdrop.open { opacity: 1; pointer-events: all; }
+
+.sheet-tray { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 20px 20px 0 0; z-index: 20; transform: translateY(100%); transition: transform .28s cubic-bezier(.4,0,.2,1); pointer-events: none; border-top: 0.5px solid var(--border-subtle); }
+.sheet-tray.open { transform: translateY(0%); pointer-events: all; }
+.ov-tray-inner { padding: 14px 14px 18px; }
+.tray-handle { width: 32px; height: 3px; border-radius: 2px; background: var(--handle-color); margin: 0 auto 12px; }
+.tray-title { font-size: 11px; font-weight: 500; color: var(--fg-secondary); margin-bottom: 10px; text-align: center; }
+
+/* KEY FIX: top padding gives the box-shadow ring room to breathe */
+.ov-scroll {
+  display: flex; gap: 6px;
+  overflow-x: auto;
+  padding: 4px 4px 6px 4px; /* 4px top so the 2.5px outline of .current isn't clipped */
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; direction: ltr;
+}
+.ov-scroll::-webkit-scrollbar { display: none; }
+
+.ov-cell { width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; border: 1.5px solid var(--dot-border); background: transparent; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; cursor: pointer; transition: all .15s; color: var(--fg-tertiary); }
+.ov-cell:hover { color: var(--fg-primary); }
+.ov-cell.answered { border-color: transparent; color: #fff; }
+.ov-cell.current  { box-shadow: 0 0 0 2.5px var(--dot-current); color: var(--fg-primary); }
+.ov-cell.guessed  { opacity: .6; }
+.ov-legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; }
+.ov-leg { display: flex; align-items: center; gap: 5px; font-size: 9px; color: var(--fg-tertiary); }
+.ov-leg-dot { width: 8px; height: 8px; border-radius: 3px; border: 1.5px solid var(--dot-border); }
+.ov-leg-dot.filled { border-color: transparent; }
+.tray-close { width: 100%; margin-top: 12px; padding: 9px; border-radius: 12px; background: var(--sheet-close-bg); border: none; color: var(--sheet-close-color); font-size: 11px; cursor: pointer; }
+
+.modal-backdrop { position: absolute; inset: 0; z-index: 25; background: var(--backdrop-bg); opacity: 0; pointer-events: none; transition: opacity .22s; border-radius: 34px; display: flex; align-items: center; justify-content: center; }
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+.chapter-modal { border-radius: 16px; padding: 20px 18px 16px; width: 200px; border: 0.5px solid var(--border-subtle); transform: scale(0.92) translateY(8px); transition: transform .22s cubic-bezier(.34,1.56,.64,1), opacity .2s; opacity: 0; }
+.modal-backdrop.open .chapter-modal { transform: scale(1) translateY(0); opacity: 1; }
+.modal-pill-row { display: flex; justify-content: center; margin-bottom: 14px; }
+.modal-pill { display: flex; align-items: center; gap: 6px; border-radius: 20px; padding: 5px 12px; }
+.modal-pill-type { font-size: 13px; font-weight: 700; }
+.modal-pill-sep  { font-size: 12px; opacity: .5; }
+.modal-pill-num  { font-size: 12px; font-weight: 400; opacity: .85; }
+.modal-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 0.5px solid var(--border-subtle); }
+.modal-row:last-of-type { border-bottom: none; }
+.modal-label { font-size: 10px; color: var(--fg-tertiary); }
+.modal-val   { font-size: 11px; font-weight: 500; color: var(--fg-primary); }
+.modal-close { width: 100%; margin-top: 14px; padding: 9px; border-radius: 12px; background: var(--sheet-close-bg); border: none; color: var(--sheet-close-color); font-size: 11px; cursor: pointer; }
+
+.pause-overlay { position: absolute; inset: 0; z-index: 30; border-radius: 34px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; opacity: 0; transition: opacity .2s; }
+.pause-overlay.open { opacity: 1; pointer-events: all; }
+.pause-label  { font-size: 14px; font-weight: 500; color: var(--fg-secondary); }
+.pause-resume { padding: 10px 28px; border-radius: 20px; background: var(--pause-btn-bg); border: 1px solid var(--pause-btn-border); color: var(--fg-primary); font-size: 12px; cursor: pointer; }
+/* ── Floating settings button (visible on all screen sizes) ── */
+.settings-fab {
+  position: fixed; bottom: 24px; left: 16px;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 100;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  transition: background .15s;
+}
+.settings-fab:hover { background: rgba(255,255,255,0.2); }
+.settings-fab i { font-size: 16px; color: rgba(255,255,255,0.7); }
+
+.settings-panel {
+  position: fixed; bottom: 72px; left: 12px;
+  background: rgba(24,24,36,0.97);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; padding: 14px;
+  z-index: 100; min-width: 200px;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  display: none; flex-direction: column; gap: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.settings-panel.open { display: flex; }
+.settings-section-label {
+  font-size: 9px; font-weight: 600; letter-spacing: .06em;
+  color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 2px;
+}
+.settings-btn-row { display: flex; gap: 6px; flex-wrap: wrap; direction: rtl; }
+.s-btn {
+  font-size: 11px; padding: 5px 10px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.6); cursor: pointer; transition: all .15s;
+  white-space: nowrap;
+}
+.s-btn:hover { background: rgba(255,255,255,0.12); }
+.s-btn.active { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.35); font-weight: 500; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="outer">
+<div class="controls-row" id="type-controls">
+  <button class="ctrl-btn active" onclick="setType('quant')">כמותי</button>
+  <button class="ctrl-btn" onclick="setType('verbal')">מילולי</button>
+  <button class="ctrl-btn" onclick="setType('english')">אנגלית</button>
+</div>
+<div class="controls-row">
+  <button class="ctrl-btn" id="mode-dark"  onclick="setMode('dark')">🌙 כהה</button>
+  <button class="ctrl-btn active" id="mode-light" onclick="setMode('light')">☀️ בהיר</button>
+</div>
+
+<div class="phone" id="phone">
+
+<!-- Floating settings button — always visible -->
+<button class="settings-fab" onclick="toggleSettings(event)" aria-label="הגדרות">
+  <i class="ti ti-adjustments-horizontal"></i>
+</button>
+<div class="settings-panel" id="settings-panel" onclick="event.stopPropagation()">
+  <div>
+    <div class="settings-section-label">סוג פרק</div>
+    <div class="settings-btn-row" id="s-type-controls">
+      <button class="s-btn active" onclick="setType('quant');updateSBtns()">כמותי</button>
+      <button class="s-btn" onclick="setType('verbal');updateSBtns()">מילולי</button>
+      <button class="s-btn" onclick="setType('english');updateSBtns()">אנגלית</button>
+    </div>
+  </div>
+  <div>
+    <div class="settings-section-label">מצב תצוגה</div>
+    <div class="settings-btn-row" id="s-mode-controls">
+      <button class="s-btn" onclick="setMode('dark');updateSBtns()">🌙 כהה</button>
+      <button class="s-btn active" onclick="setMode('light');updateSBtns()">☀️ בהיר</button>
+    </div>
+  </div>
+  <div>
+    <div class="settings-section-label">טיימר</div>
+    <div class="settings-btn-row">
+      <button class="s-btn" onclick="resetTimer()">↺ אפס טיימר</button>
+    </div>
+  </div>
+</div>
+<div class="screen" id="screen">
+
+  <div class="top-section">
+    <button class="chapter-pill-btn" id="chapter-pill" onclick="openChModal(event)">
+      <span class="pill-type" id="pill-type">כמותי</span>
+      <span class="pill-sep">·</span>
+      <span class="pill-num">פרק 3</span>
+    </button>
+    <div class="timer-row">
+      <button class="icon-btn" onclick="togglePause()" aria-label="השהה">
+        <i class="ti ti-player-pause"></i>
+      </button>
+      <div class="timer-block">
+        <div class="timer-val" id="timer-val">00:00</div>
+        <div class="timer-cap" id="timer-cap">מתוך 20:00</div>
+      </div>
+      <button class="icon-btn" onclick="toggleTimerBlur()" aria-label="הסתר שעון">
+        <i class="ti ti-eye" id="eye-icon"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="q-area" onclick="openOvTray(event)" style="cursor:pointer;">
+    <div class="q-center">
+      <div class="q-label">שאלה</div>
+      <div class="q-big" id="q-big">8</div>
+      <div class="q-sub" id="q-sub">מתוך 20</div>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <!-- In RTL: right side = visually first = NEXT (forward) -->
+    <button class="nav-side" id="next-btn" onclick="navigate(1)">
+      <i class="ti ti-chevron-right nav-arrow" id="next-icon"></i>
+      <span class="nav-label" id="next-label">שאלה 9</span>
+    </button>
+    <div class="ellipses-col" id="ellipses-col"></div>
+    <!-- In RTL: left side = visually last = PREV (backward) -->
+    <button class="nav-side" id="prev-btn" onclick="navigate(-1)">
+      <i class="ti ti-chevron-left nav-arrow"></i>
+      <span class="nav-label" id="prev-label">שאלה 7</span>
+    </button>
+  </div>
+
+  <div class="bottom-section" onclick="openOvTray(event)">
+    <div class="dots-bar">
+      <div class="dots-row" id="dots-row"></div>
+      <span class="dots-hint">▲</span>
+    </div>
+  </div>
+
+  <div class="tray-backdrop" id="tray-backdrop" onclick="closeOvTray()"></div>
+  <div class="sheet-tray" id="ov-tray">
+    <div class="ov-tray-inner">
+      <div class="tray-handle"></div>
+      <div class="tray-title">כל השאלות</div>
+      <div class="ov-scroll" id="ov-scroll" onclick="event.stopPropagation()"></div>
+      <div class="ov-legend">
+        <div class="ov-leg"><div class="ov-leg-dot"></div>לא נענתה</div>
+        <div class="ov-leg"><div class="ov-leg-dot filled" id="leg-answered"></div>נענתה</div>
+        <div class="ov-leg"><div class="ov-leg-dot filled" id="leg-guessed" style="opacity:.6"></div>ניחוש</div>
+      </div>
+      <button class="tray-close" onclick="closeOvTray()">סגור</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="ch-modal-backdrop" onclick="closeChModal()">
+    <div class="chapter-modal" id="chapter-modal" onclick="event.stopPropagation()">
+      <div class="modal-pill-row">
+        <div class="modal-pill" id="modal-pill">
+          <span class="modal-pill-type" id="modal-pill-type">כמותי</span>
+          <span class="modal-pill-sep">·</span>
+          <span class="modal-pill-num">פרק 3</span>
+        </div>
+      </div>
+      <div class="modal-row"><span class="modal-label">פרק בסשן</span><span class="modal-val">פרק 3 מתוך 6</span></div>
+      <div class="modal-row"><span class="modal-label">שנה ועונה</span><span class="modal-val">אביב 2023</span></div>
+      <div class="modal-row"><span class="modal-label">סוג</span><span class="modal-val" id="modal-type">כמותי א׳</span></div>
+      <div class="modal-row"><span class="modal-label">שאלות</span><span class="modal-val" id="modal-qs">20 שאלות</span></div>
+      <div class="modal-row"><span class="modal-label">זמן שחלף</span><span class="modal-val">08:42</span></div>
+      <button class="modal-close" onclick="closeChModal()">סגור</button>
+    </div>
+  </div>
+
+  <div class="pause-overlay" id="pause-overlay">
+    <i class="ti ti-player-pause" style="font-size:32px; color:var(--fg-tertiary)"></i>
+    <div class="pause-label">הסשן מושהה</div>
+    <button class="pause-resume" onclick="togglePause()">המשך</button>
+  </div>
+
+</div>
+</div>
+<div style="font-size:11px; color:#888; text-align:center; line-height:1.7; max-width:260px; margin-top:4px;" class="footer-hint">
+  לחץ על הנקודות לסקירת שאלות · לחץ על הפיל לפרטי הפרק
+</div>
+</div>
+
+<script>
+const TYPES = {
+  quant:   { label:'כמותי',
+    dark:{  pillBg:'rgba(0,82,204,0.25)',   pillColor:'#6EA8FE',
+            tint:'rgba(0,82,204,0.14)',      sel:'#0052CC',
+            ellipseBorder:'rgba(110,168,254,0.28)',
+            glowColor:'rgba(110,168,254,0.35)', glowRing:'#6EA8FE' },
+    light:{ pillBg:'rgba(0,82,204,0.22)',   pillColor:'#003A99',
+            tint:'rgba(0,82,204,0.17)',      sel:'#1E3A8A',
+            pillBorder:'rgba(0,82,204,0.20)', ellipseBorder:'rgba(0,82,204,0.22)',
+            glowColor:'rgba(30,58,138,0.22)', glowRing:'#1E3A8A' },
+    qs:20, typeLabel:'כמותי א׳' },
+  verbal:  { label:'מילולי',
+    dark:{  pillBg:'rgba(177,0,110,0.25)',  pillColor:'#F472B6',
+            tint:'rgba(177,0,110,0.14)',     sel:'#B1006E',
+            ellipseBorder:'rgba(244,114,182,0.28)',
+            glowColor:'rgba(244,114,182,0.35)', glowRing:'#F472B6' },
+    light:{ pillBg:'rgba(177,0,110,0.22)',  pillColor:'#8B0057',
+            tint:'rgba(177,0,110,0.17)',     sel:'#8B0057',
+            pillBorder:'rgba(177,0,110,0.20)', ellipseBorder:'rgba(177,0,110,0.22)',
+            glowColor:'rgba(139,0,87,0.20)', glowRing:'#8B0057' },
+    qs:23, typeLabel:'מילולי ב׳' },
+  english: { label:'אנגלית',
+    dark:{  pillBg:'rgba(184,138,0,0.25)',  pillColor:'#FCD34D',
+            tint:'rgba(184,138,0,0.15)',     sel:'#7A5500',
+            ellipseBorder:'rgba(252,211,77,0.28)',
+            glowColor:'rgba(252,211,77,0.30)', glowRing:'#FCD34D' },
+    light:{ pillBg:'rgba(184,138,0,0.22)',  pillColor:'#7A5500',
+            tint:'rgba(184,138,0,0.18)',     sel:'#7A5500',
+            pillBorder:'rgba(184,138,0,0.22)', ellipseBorder:'rgba(184,138,0,0.24)',
+            glowColor:'rgba(122,85,0,0.18)', glowRing:'#7A5500' },
+    qs:22, typeLabel:'אנגלית א׳' }
+};
+
+const BG_DARK  = 'rgba(19,19,26,1)';   // #13131A
+const BG_LIGHT = 'rgba(250,248,243,1)'; // #FAF8F3
+
+let type='quant', mode='light', currentQ=8;  // default: light mode
+let answers={}, guessed={};
+let paused=false, timerBlurred=false, ovOpen=false, chModalOpen=false;
+
+// ── Timer state ──
+const CHAPTER_DURATION = 20 * 60; // 20 minutes in seconds
+let secondsElapsed = 0;
+let timerInterval = null;
+
+function formatTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timer-val');
+  if(el) el.textContent = formatTime(secondsElapsed);
+  // Urgency: amber under 2 min remaining, red under 1 min remaining
+  const remaining = CHAPTER_DURATION - secondsElapsed;
+  if(el && !timerBlurred) {
+    if(remaining <= 60)       el.style.color = 'rgba(255,80,80,0.9)';
+    else if(remaining <= 120) el.style.color = 'rgba(255,180,50,0.9)';
+    else                      el.style.color = '';
+  }
+}
+
+function startTimer() {
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if(paused) return;
+    if(secondsElapsed >= CHAPTER_DURATION) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      updateTimerDisplay();
+      return;
+    }
+    secondsElapsed++;
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function resetTimer() {
+  if(timerInterval) clearInterval(timerInterval);
+  secondsElapsed = 0;
+  updateTimerDisplay();
+  startTimer();
+}
+
+const T=()=>TYPES[type], M=()=>T()[mode];
+
+function openOvTray(e) {
+  if(e) e.stopPropagation();
+  if(ovOpen){ closeOvTray(); return; }
+  ovOpen=true;
+  document.getElementById('tray-backdrop').classList.add('open');
+  document.getElementById('ov-tray').classList.add('open');
+  renderOvScroll();
+}
+function closeOvTray() {
+  ovOpen=false;
+  document.getElementById('tray-backdrop').classList.remove('open');
+  document.getElementById('ov-tray').classList.remove('open');
+}
+function openChModal(e) {
+  if(e) e.stopPropagation();
+  if(chModalOpen){ closeChModal(); return; }
+  chModalOpen=true;
+  document.getElementById('ch-modal-backdrop').classList.add('open');
+}
+function closeChModal() {
+  chModalOpen=false;
+  document.getElementById('ch-modal-backdrop').classList.remove('open');
+}
+
+function setType(t){
+  type=t;
+  ['quant','verbal','english'].forEach((v,i)=>document.querySelectorAll('#type-controls .ctrl-btn')[i].classList.toggle('active',v===t));
+  currentQ=8; answers={}; guessed={};
+  resetTimer();
+  render();
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('mode-dark').classList.toggle('active',m==='dark');
+  document.getElementById('mode-light').classList.toggle('active',m==='light');
+  document.getElementById('screen').classList.toggle('light',m==='light');
+  document.getElementById('phone').classList.toggle('light-mode',m==='light');
+  document.body.style.background = m==='dark' ? BG_DARK : BG_LIGHT;
+  render();
+}
+
+function render(){
+  const t=T(), m=M();
+  const bg = mode==='dark' ? BG_DARK : BG_LIGHT;
+  document.getElementById('screen').style.background=bg;
+  document.getElementById('ov-tray').style.background=bg;
+  document.getElementById('chapter-modal').style.background= mode==='dark' ? 'rgba(26,26,36,0.98)' : 'rgba(250,248,243,0.99)';
+  document.body.style.background=bg;
+
+  const pill=document.getElementById('chapter-pill');
+  pill.style.background=m.pillBg;
+  pill.style.border = m.pillBorder ? `1px solid ${m.pillBorder}` : 'none';
+  document.getElementById('pill-type').style.color=m.pillColor;
+  pill.querySelector('.pill-sep').style.color=m.pillColor+'99';
+  pill.querySelector('.pill-num').style.color=m.pillColor;
+  document.getElementById('pill-type').textContent=t.label;
+
+  const mp=document.getElementById('modal-pill');
+  mp.style.background=m.pillBg;
+  mp.style.border = m.pillBorder ? `1px solid ${m.pillBorder}` : 'none';
+  document.getElementById('modal-pill-type').style.color=m.pillColor;
+  document.getElementById('modal-pill-type').textContent=t.label;
+  mp.querySelector('.modal-pill-sep').style.color=m.pillColor+'99';
+  mp.querySelector('.modal-pill-num').style.color=m.pillColor;
+
+  document.getElementById('q-big').textContent=currentQ;
+  document.getElementById('q-sub').textContent='מתוך '+t.qs;
+  document.getElementById('modal-type').textContent=t.typeLabel;
+  document.getElementById('modal-qs').textContent=t.qs+' שאלות';
+  document.getElementById('leg-answered').style.background=m.sel;
+  document.getElementById('leg-guessed').style.background=m.sel;
+
+  document.getElementById('prev-btn').classList.toggle('disabled',currentQ<=1);
+  document.getElementById('prev-label').textContent=currentQ>1?'שאלה '+(currentQ-1):'';
+  const isLast=currentQ>=t.qs;
+  document.getElementById('next-icon').className=isLast?'ti ti-player-track-next nav-arrow':'ti ti-chevron-right nav-arrow';
+  document.getElementById('next-label').textContent=isLast?'סיום':'שאלה '+(currentQ+1);
+  document.getElementById('next-btn').classList.toggle('disabled', false);
+
+  renderEllipses(); renderDots();
+  if(ovOpen) renderOvScroll();
+}
+
+function renderEllipses(){
+  const m=M(), col=document.getElementById('ellipses-col');
+  col.innerHTML='';
+  for(let i=1;i<=4;i++){
+    const row=document.createElement('div'); row.className='ellipse-row';
+    const el=document.createElement('div'); el.className='ellipse'; el.id='e'+i; el.textContent=i;
+    const sel=answers[currentQ]===i;
+    el.classList.toggle('selected',sel);
+    el.style.background=sel?m.sel:m.tint;
+    el.style.color=sel?'#fff':'';
+    if(sel){
+      // outer ring (2px) in light variant + 20px soft halo
+      el.style.boxShadow=`0 0 0 2px ${m.glowRing}, 0 0 20px ${m.glowColor}`;
+      el.style.borderColor='transparent';
+    } else {
+      el.style.boxShadow='none';
+      el.style.borderColor=m.ellipseBorder||'';
+    }
+    el.onclick=()=>selectAnswer(i);
+    row.appendChild(el);
+    const gb=document.createElement('button');
+    gb.className='guess-icon-btn'+(sel?' visible':'');
+    if(sel&&guessed[currentQ]) gb.classList.add('active');
+    gb.setAttribute('aria-label','ניחשתי');
+    gb.onclick=(e)=>{ e.stopPropagation(); toggleGuess(); };
+    const isActive=sel&&guessed[currentQ];
+    gb.style.background=isActive?m.sel:'';
+    gb.style.borderColor=isActive?m.glowRing:'';
+    // guess glow: softer, 10px, ~57% of ellipse glow alpha
+    const guessAlpha=(parseFloat(m.glowColor.match(/[\d.]+\)$/)[0])*0.57).toFixed(2);
+    const guessGlowColor=m.glowColor.replace(/[\d.]+\)$/,guessAlpha+')');
+    gb.style.boxShadow=isActive?`0 0 0 1.5px ${m.glowRing}, 0 0 10px ${guessGlowColor}`:'none';
+    const ic=document.createElement('i'); ic.className='ti ti-question-mark'; ic.style.color=isActive?'#fff':'';
+    const lbl=document.createElement('span'); lbl.textContent='ניחשתי'; if(isActive) lbl.style.color='#fff';
+    gb.appendChild(ic); gb.appendChild(lbl); row.appendChild(gb); col.appendChild(row);
+  }
+}
+
+function renderDots(){
+  const m=M(), row=document.getElementById('dots-row');
+  row.innerHTML='';
+  for(let i=1;i<=T().qs;i++){
+    const d=document.createElement('div'); d.className='dot';
+    if(i===currentQ){
+      d.classList.add('current');
+    } else if(answers[i]!==undefined){
+      d.classList.add('answered');
+      d.style.background=m.sel;
+      d.style.borderColor='transparent';
+      if(guessed[i]) d.style.opacity='0.5';
+    }
+    row.appendChild(d);
+  }
+}
+
+function renderOvScroll(){
+  const m=M(), scroll=document.getElementById('ov-scroll');
+  scroll.innerHTML='';
+  for(let i=1;i<=T().qs;i++){
+    const cell=document.createElement('div'); cell.className='ov-cell'; cell.textContent=i;
+    if(answers[i]!==undefined){ cell.classList.add('answered'); cell.style.background=m.sel; cell.style.color='#fff'; if(guessed[i]) cell.classList.add('guessed'); }
+    if(i===currentQ) cell.classList.add('current');
+    cell.onclick=(e)=>{ e.stopPropagation(); currentQ=i; closeOvTray(); render(); };
+    scroll.appendChild(cell);
+  }
+  const cells=scroll.querySelectorAll('.ov-cell');
+  if(cells[currentQ-1]) cells[currentQ-1].scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});
+}
+
+function selectAnswer(n){ if(answers[currentQ]===n){delete answers[currentQ];delete guessed[currentQ];}else{answers[currentQ]=n;} render(); }
+function toggleGuess(){ if(answers[currentQ]===undefined)return; guessed[currentQ]=!guessed[currentQ]; render(); }
+function navigate(dir){ const nq=currentQ+dir; if(nq<1||nq>T().qs)return; currentQ=nq; render(); }
+function toggleTimerBlur(){
+  timerBlurred=!timerBlurred;
+  const el=document.getElementById('timer-val');
+  el.classList.toggle('blurred',timerBlurred);
+  if(timerBlurred) el.style.color='';
+  else updateTimerDisplay(); // restore urgency color if needed
+  document.getElementById('eye-icon').className=timerBlurred?'ti ti-eye-off':'ti ti-eye';
+}
+function togglePause(){
+  paused=!paused;
+  const o=document.getElementById('pause-overlay');
+  o.style.background=mode==='dark'?'rgba(8,8,18,0.94)':'rgba(240,240,248,0.96)';
+  o.classList.toggle('open',paused);
+  // Timer keeps running via interval but tick is skipped when paused=true
+}
+
+let settingsOpen=false;
+function toggleSettings(e){
+  if(e) e.stopPropagation();
+  settingsOpen=!settingsOpen;
+  document.getElementById('settings-panel').classList.toggle('open',settingsOpen);
+}
+document.addEventListener('click',()=>{ settingsOpen=false; document.getElementById('settings-panel').classList.remove('open'); });
+
+function updateSBtns(){
+  const types=['quant','verbal','english'];
+  document.querySelectorAll('#s-type-controls .s-btn').forEach((b,i)=>b.classList.toggle('active',types[i]===type));
+  document.querySelectorAll('#s-mode-controls .s-btn').forEach((b,i)=>b.classList.toggle('active',['dark','light'][i]===mode));
+}
+
+render();
+updateTimerDisplay();
+startTimer();
+// Apply initial mode class (light by default)
+document.getElementById('screen').classList.toggle('light', mode==='light');
+document.getElementById('phone').classList.toggle('light-mode', mode==='light');
+document.body.style.background = mode==='dark' ? BG_DARK : BG_LIGHT;
+</script>
+</body>
+</html>
