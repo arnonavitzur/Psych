@@ -146,6 +146,52 @@ html, body {
 .modal-label { font-size: 10px; color: var(--fg-tertiary); }
 .modal-val   { font-size: 11px; font-weight: 500; color: var(--fg-primary); }
 .modal-close { width: 100%; margin-top: 14px; padding: 9px; border-radius: 12px; background: var(--sheet-close-bg); border: none; color: var(--sheet-close-color); font-size: 11px; cursor: pointer; }
+
+/* Finish-chapter early button */
+.modal-hr { border: none; border-top: 0.5px solid var(--border-subtle); margin: 12px 0 0; }
+.modal-finish-btn {
+  display: block;
+  width: 72%;
+  margin: 10px auto 0;
+  padding: 8px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1.5px solid #B5341B;
+  color: #B5341B;
+  font-size: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity .15s;
+}
+.modal-finish-btn:hover { opacity: .75; }
+.screen.light .modal-finish-btn { border-color: #B5341B; color: #B5341B; }
+/* dark mode gets a brighter red */
+.screen:not(.light) .modal-finish-btn { border-color: #FF6B5C; color: #FF6B5C; }
+
+/* Confirmation overlay — sits inside the modal */
+.modal-confirm {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0 2px;
+  text-align: center;
+}
+.modal-confirm.open { display: flex; }
+.modal-confirm-text { font-size: 11px; color: var(--fg-primary); line-height: 1.5; }
+.modal-confirm-row { display: flex; gap: 8px; width: 100%; }
+.modal-confirm-yes {
+  flex: 1; padding: 9px; border-radius: 10px;
+  background: transparent; border: 1.5px solid #B5341B; color: #B5341B;
+  font-size: 11px; cursor: pointer; font-weight: 500;
+}
+.screen:not(.light) .modal-confirm-yes { border-color: #FF6B5C; color: #FF6B5C; }
+.modal-confirm-yes:hover { opacity: .75; }
+.modal-confirm-no {
+  flex: 1; padding: 9px; border-radius: 10px;
+  background: var(--sheet-close-bg); border: none;
+  color: var(--sheet-close-color); font-size: 11px; cursor: pointer;
+}
 .pause-overlay { position: absolute; inset: 0; z-index: 30; border-radius: 34px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; opacity: 0; transition: opacity .2s; }
 .pause-overlay.open { opacity: 1; pointer-events: all; }
 .pause-label  { font-size: 14px; font-weight: 500; color: var(--fg-secondary); }
@@ -396,6 +442,7 @@ html, body {
       <span class="pill-type" id="pill-type">כמותי</span>
       <span class="pill-sep">·</span>
       <span class="pill-num">פרק 3</span>
+      <span class="pill-chevron" id="pill-chevron" style="font-size:8px;opacity:.6;margin-right:2px;">▾</span>
     </button>
     <div class="timer-row">
       <button class="icon-btn" onclick="togglePause()" aria-label="השהה">
@@ -467,19 +514,35 @@ html, body {
 
   <div class="modal-backdrop" id="ch-modal-backdrop" onclick="closeChModal()">
     <div class="chapter-modal" id="chapter-modal" onclick="event.stopPropagation()">
-      <div class="modal-pill-row">
-        <div class="modal-pill" id="modal-pill">
-          <span class="modal-pill-type" id="modal-pill-type">כמותי</span>
-          <span class="modal-pill-sep">·</span>
-          <span class="modal-pill-num">פרק 3</span>
+
+      <!-- Info section (hidden during confirm) -->
+      <div id="modal-info">
+        <div class="modal-pill-row">
+          <div class="modal-pill" id="modal-pill">
+            <span class="modal-pill-type" id="modal-pill-type">כמותי</span>
+            <span class="modal-pill-sep">·</span>
+            <span class="modal-pill-num">פרק 3</span>
+          </div>
+        </div>
+        <div class="modal-row"><span class="modal-label">פרק בסשן</span><span class="modal-val">פרק 3 מתוך 6</span></div>
+        <div class="modal-row"><span class="modal-label">שנה ועונה</span><span class="modal-val">אביב 2023</span></div>
+        <div class="modal-row"><span class="modal-label">סוג</span><span class="modal-val" id="modal-type">כמותי א׳</span></div>
+        <div class="modal-row"><span class="modal-label">שאלות</span><span class="modal-val" id="modal-qs">20 שאלות</span></div>
+        <div class="modal-row"><span class="modal-label">זמן שחלף</span><span class="modal-val" id="modal-elapsed">00:00</span></div>
+        <hr class="modal-hr">
+        <button class="modal-finish-btn" onclick="showFinishConfirm()">סיים פרק לפני הזמן</button>
+        <button class="modal-close" onclick="closeChModal()">סגור</button>
+      </div>
+
+      <!-- Confirmation state -->
+      <div class="modal-confirm" id="modal-confirm">
+        <div class="modal-confirm-text">לסיים את הפרק הנוכחי ולעבור לפרק הבא?</div>
+        <div class="modal-confirm-row">
+          <button class="modal-confirm-yes" onclick="confirmFinishChapter()">כן, המשך</button>
+          <button class="modal-confirm-no" onclick="hideFinishConfirm()">ביטול</button>
         </div>
       </div>
-      <div class="modal-row"><span class="modal-label">פרק בסשן</span><span class="modal-val">פרק 3 מתוך 6</span></div>
-      <div class="modal-row"><span class="modal-label">שנה ועונה</span><span class="modal-val">אביב 2023</span></div>
-      <div class="modal-row"><span class="modal-label">סוג</span><span class="modal-val" id="modal-type">כמותי א׳</span></div>
-      <div class="modal-row"><span class="modal-label">שאלות</span><span class="modal-val" id="modal-qs">20 שאלות</span></div>
-      <div class="modal-row"><span class="modal-label">זמן שחלף</span><span class="modal-val" id="modal-elapsed">00:00</span></div>
-      <button class="modal-close" onclick="closeChModal()">סגור</button>
+
     </div>
   </div>
 
@@ -518,7 +581,7 @@ const TYPES = {
 };
 
 const BG_DARK='rgba(19,19,26,1)', BG_LIGHT='rgba(250,248,243,1)';
-let type='quant', mode='light', currentQ=1;
+let type='quant', mode='light', currentQ=1, chapterNum=1;
 let answers={}, guessed={};
 let paused=false, timerBlurred=false, ovOpen=false, chModalOpen=false;
 const CHAPTER_DURATION=1200;
@@ -882,6 +945,10 @@ function render(){
     pill.querySelector('.pill-sep').style.color=m.pillColor+'99';
     pill.querySelector('.pill-num').style.color=m.pillColor;
     document.getElementById('pill-type').textContent=t.label;
+    // Update chapter number display
+    pill.querySelector('.pill-num').textContent='פרק '+chapterNum;
+    const chev=document.getElementById('pill-chevron');
+    if(chev) chev.style.color=m.pillColor;
   }
   const mp=document.getElementById('modal-pill');
   if(mp){
@@ -938,11 +1005,37 @@ function openChModal(e){
   if(e) e.stopPropagation();
   if(chModalOpen){ closeChModal(); return; }
   chModalOpen=true;
+  hideFinishConfirm(); // always open on info view
   document.getElementById('ch-modal-backdrop').classList.add('open');
 }
 function closeChModal(){
   chModalOpen=false;
   document.getElementById('ch-modal-backdrop').classList.remove('open');
+  hideFinishConfirm();
+}
+function showFinishConfirm(){
+  document.getElementById('modal-info').style.display='none';
+  document.getElementById('modal-confirm').classList.add('open');
+}
+function hideFinishConfirm(){
+  document.getElementById('modal-info').style.display='';
+  document.getElementById('modal-confirm').classList.remove('open');
+}
+function confirmFinishChapter(){
+  closeChModal();
+  // Advance to next chapter: increment number, pick random different type
+  chapterNum++;
+  const types=['quant','verbal','english'];
+  const others=types.filter(t=>t!==type);
+  type=others[Math.floor(Math.random()*others.length)];
+  // Reset session state
+  currentQ=1; answers={}; guessed={};
+  _lsBuildKey=''; // force landscape rebuild
+  resetTimer();
+  render();
+  // Update desktop controls to reflect new type
+  types.forEach((v,i)=>document.querySelectorAll('#type-controls .ctrl-btn')[i].classList.toggle('active',v===type));
+  updateSBtns();
 }
 
 /* ── MISC ── */
