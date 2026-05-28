@@ -60,7 +60,7 @@ html, body {
   --backdrop-bg: rgba(0,0,0,0.55);
   --pause-btn-bg: rgba(255,255,255,0.10);
   --pause-btn-border: rgba(255,255,255,0.22);
-  --band-bg: rgba(255,255,255,0.035);
+  --band-bg: transparent;
 }
 .screen.light {
   --fg-primary: rgba(10,10,20,0.90);
@@ -80,7 +80,7 @@ html, body {
   --backdrop-bg: rgba(0,0,0,0.35);
   --pause-btn-bg: rgba(0,0,0,0.08);
   --pause-btn-border: rgba(0,0,0,0.16);
-  --band-bg: rgba(0,0,0,0.025);
+  --band-bg: #FFF7F0;
 }
 
 /* ══════════════════════════════════════════
@@ -301,8 +301,9 @@ html, body {
 .ls-scroll::-webkit-scrollbar { display: none; }
 
 /* Alternating group bands (every 3 columns) */
-.q-group { display: flex; flex-shrink: 0; border-radius: 6px; }
+.q-group { display: flex; flex-shrink: 0; }
 .q-group:nth-child(even) { background: var(--band-bg); }
+/* odd groups: chapter tint set inline in buildLandscape */
 
 /* Landscape column */
 .q-col {
@@ -627,20 +628,20 @@ html, body {
 const TYPES = {
   quant: {
     label:'כמותי',
-    dark:{  pillBg:'rgba(0,82,204,0.25)',   pillColor:'#6EA8FE', tint:'rgba(0,82,204,0.14)',  sel:'#0052CC', ellBord:'rgba(110,168,254,0.28)', glowC:'rgba(110,168,254,0.35)', glowR:'#6EA8FE', bandTint:'rgba(110,168,254,0.08)' },
-    light:{ pillBg:'rgba(0,82,204,0.22)',   pillColor:'#003A99', tint:'rgba(0,82,204,0.17)',  sel:'#1E3A8A', ellBord:'rgba(0,82,204,0.22)',    glowC:'rgba(30,58,138,0.22)',   glowR:'#1E3A8A', pillBorder:'rgba(0,82,204,0.20)', bandTint:'rgba(30,58,138,0.08)' },
+    dark:{  pillBg:'rgba(0,82,204,0.25)',   pillColor:'#6EA8FE', tint:'rgba(0,82,204,0.14)',  sel:'#0052CC', ellBord:'rgba(110,168,254,0.35)', glowC:'rgba(110,168,254,0.35)', glowR:'#6EA8FE', bandTint:'rgba(110,168,254,0.12)' },
+    light:{ pillBg:'rgba(0,82,204,0.22)',   pillColor:'#003A99', tint:'rgba(0,82,204,0.17)',  sel:'#1E3A8A', ellBord:'rgba(0,82,204,0.30)',    glowC:'rgba(30,58,138,0.22)',   glowR:'#1E3A8A', pillBorder:'rgba(0,82,204,0.20)', bandTint:'rgba(0,82,204,0.10)' },
     qs:20, typeLabel:'כמותי א׳'
   },
   verbal: {
     label:'מילולי',
-    dark:{  pillBg:'rgba(177,0,110,0.25)',  pillColor:'#F472B6', tint:'rgba(177,0,110,0.14)', sel:'#B1006E', ellBord:'rgba(244,114,182,0.28)',glowC:'rgba(244,114,182,0.35)', glowR:'#F472B6', bandTint:'rgba(244,114,182,0.08)' },
-    light:{ pillBg:'rgba(177,0,110,0.22)',  pillColor:'#8B0057', tint:'rgba(177,0,110,0.17)', sel:'#8B0057', ellBord:'rgba(177,0,110,0.22)',  glowC:'rgba(139,0,87,0.20)',    glowR:'#8B0057', pillBorder:'rgba(177,0,110,0.20)', bandTint:'rgba(139,0,87,0.08)' },
+    dark:{  pillBg:'rgba(177,0,110,0.25)',  pillColor:'#F472B6', tint:'rgba(177,0,110,0.14)', sel:'#B1006E', ellBord:'rgba(244,114,182,0.35)',glowC:'rgba(244,114,182,0.35)', glowR:'#F472B6', bandTint:'rgba(244,114,182,0.12)' },
+    light:{ pillBg:'rgba(177,0,110,0.22)',  pillColor:'#8B0057', tint:'rgba(177,0,110,0.17)', sel:'#8B0057', ellBord:'rgba(177,0,110,0.30)',  glowC:'rgba(139,0,87,0.20)',    glowR:'#8B0057', pillBorder:'rgba(177,0,110,0.20)', bandTint:'rgba(177,0,110,0.10)' },
     qs:23, typeLabel:'מילולי ב׳'
   },
   english: {
     label:'אנגלית',
-    dark:{  pillBg:'rgba(184,138,0,0.25)',  pillColor:'#FCD34D', tint:'rgba(184,138,0,0.15)', sel:'#7A5500', ellBord:'rgba(252,211,77,0.28)', glowC:'rgba(252,211,77,0.30)',  glowR:'#FCD34D', bandTint:'rgba(252,211,77,0.08)' },
-    light:{ pillBg:'rgba(184,138,0,0.22)',  pillColor:'#7A5500', tint:'rgba(184,138,0,0.18)', sel:'#7A5500', ellBord:'rgba(184,138,0,0.24)',  glowC:'rgba(122,85,0,0.18)',    glowR:'#7A5500', pillBorder:'rgba(184,138,0,0.22)', bandTint:'rgba(122,85,0,0.08)' },
+    dark:{  pillBg:'rgba(184,138,0,0.25)',  pillColor:'#FCD34D', tint:'rgba(184,138,0,0.15)', sel:'#7A5500', ellBord:'rgba(252,211,77,0.35)', glowC:'rgba(252,211,77,0.30)',  glowR:'#FCD34D', bandTint:'rgba(252,211,77,0.12)' },
+    light:{ pillBg:'rgba(184,138,0,0.22)',  pillColor:'#7A5500', tint:'rgba(184,138,0,0.18)', sel:'#7A5500', ellBord:'rgba(184,138,0,0.30)',  glowC:'rgba(122,85,0,0.18)',    glowR:'#7A5500', pillBorder:'rgba(184,138,0,0.22)', bandTint:'rgba(122,85,0,0.10)' },
     qs:22, typeLabel:'אנגלית א׳'
   }
 };
@@ -714,7 +715,7 @@ function renderAnswers(){
 
 /* ── ELLIPSE FACTORY ── */
 /* Returns the ellipse element directly (no wrap div) */
-function makeEllipse(q, i, m, w, h, fontSize){
+function makeEllipse(q, i, m, w, h, fontSize, isLandscapeCtx){
   const el=document.createElement('div');
   el.className='ellipse';
   el.style.width=w+'px';
@@ -729,7 +730,8 @@ function makeEllipse(q, i, m, w, h, fontSize){
 
   const sel=answers[q]===i;
   const isGuessed=sel&&guessed[q];
-  el.style.background=sel?m.sel:m.tint;
+  // Landscape: unselected = transparent (band shows through); portrait: tinted fill
+  el.style.background=sel ? m.sel : (isLandscapeCtx ? 'transparent' : m.tint);
   el.style.color=sel?'#fff':'';
   if(sel){
     el.style.boxShadow=`0 0 0 2px ${m.glowR}, 0 0 ${isGuessed?'10px':'20px'} ${m.glowC}`;
@@ -852,6 +854,11 @@ function buildLandscape(){
   for(let g=0; g*3<t.qs; g++){
     const group=document.createElement('div');
     group.className='q-group';
+    // Odd groups (0-indexed): chapter tint; even groups: CSS --band-bg (warm off-white / transparent)
+    if(g % 2 === 0){
+      group.style.background = m.bandTint;
+    }
+    // Even groups: leave background unset so CSS .q-group:nth-child(even) / --band-bg applies
 
     for(let gi=0; gi<3; gi++){
       const q=g*3+gi+1;
@@ -886,7 +893,7 @@ function buildLandscape(){
       stack.className='q-ellipses';
       stack.style.gap='5px';
       for(let i=1;i<=4;i++){
-        const el=makeEllipse(q,i,m,sz.w,sz.h,sz.fs);
+        const el=makeEllipse(q,i,m,sz.w,sz.h,sz.fs,true);
         el.classList.add('ellipse-landscape');
         el.dataset.q=q; el.dataset.i=i;
         stack.appendChild(el);
@@ -923,13 +930,14 @@ function updateLandscape(){
     const qn=col.querySelector('.q-num-label');
     if(qn) qn.style.color=isCurrent?m.glowR:'';
 
-    // Ellipses — rebuild event listeners not needed, just update visuals
+    // Ellipses — update visuals only, no event listener changes
     const ellipses=col.querySelectorAll('.ellipse');
     ellipses.forEach((el,idx)=>{
       const i=idx+1;
       const sel=answers[q]===i;
       const isGuessed=sel&&guessed[q];
-      el.style.background=sel?m.sel:m.tint;
+      // Landscape: unselected = transparent so band color shows through
+      el.style.background=sel?m.sel:'transparent';
       el.style.color=sel?'#fff':'';
       el.classList.toggle('selected',sel);
       el.classList.toggle('guessed',isGuessed);
